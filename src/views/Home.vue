@@ -2,7 +2,7 @@
   <div class="home">
       <el-container>
         <video id="local-video" autoplay muted></video>
-        <video id="remote-video" autoplay controls></video>
+<!--        <video id="remote-video" autoplay controls></video>-->
       </el-container>
       <div class="box">
         <el-tag>本地id：{{localPeerId}}</el-tag>
@@ -34,29 +34,27 @@ export default {
   },
   mounted() {
       let _this = this;
-      this.getLocalVideo({
-          success(stream) {
-            _this.localStream = stream;
-            _this.recStream(stream, "local-video");
-          },
-          error(error) {
-              console.log(error);
-          }
+      this.getLocalVideo((stream) => {
+          _this.localStream = stream;
+          _this.recStream(stream, "local-video");
+      }, (err) => {
+          console.log(err);
       });
-      this.peerIns = new peer({
-          host: 'localhost',
+      this.peerIns = new peer('live-id',{
+          host: '116.62.177.171',
           port: 9000,
-          path: '/myapp'
-
+          path: '/peerjs/myapp'
       });
       this.peerIns.on('open', (id) => {
           _this.localPeerId = id;
       });
+      console.log(this.peerIns);
 
       //监听连接
       this.peerIns.on('connection', (conn) => {
           conn.on('data', (data) => {
               this.remotePeerId = data;
+              this.liveChats();
           });
       });
 
@@ -87,15 +85,19 @@ export default {
               _this.stream = stream;
               _this.recStream(stream, 'remote-video');
           });
-
       },
-      getLocalVideo(callbacks) {
-          navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-          let contrains = {
+      getLocalVideo(success, error) {
+          let constraints = {
               audio: true,
               video: true
           }
-          navigator.getUserMedia(contrains, callbacks.success, callbacks.error);
+          /*navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+          navigator.getUserMedia(contrains, callbacks.success, callbacks.error);*/
+          console.log(navigator);
+          console.log(navigator.mediaDevices);
+          navigator.mediaDevices.getUserMedia(constraints)
+              .then(success)
+              .catch(error);
       },
       recStream(stream, elemId) {
           let video = document.getElementById(elemId);
